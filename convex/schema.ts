@@ -9,7 +9,7 @@ export default defineSchema({
     clerkId: v.string(),
   }).index('by_clerk_id', ['clerkId']),
   plans: defineTable({
-    userId: v.id('users'),
+    userId: v.string(),
     name: v.string(),
     workoutPlan: v.object({
       schedule: v.array(v.string()),
