@@ -6,6 +6,16 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { api } from './_generated/api';
 import { httpAction } from './_generated/server';
 
+import {
+  WorkoutPlan,
+  RawWorkoutPlan,
+  DietPlan,
+  RawDietPlan,
+  WorkoutDay,
+  WorkoutRoutine,
+  Meal,
+} from '../src/lib/types';
+
 const http = httpRouter();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -92,38 +102,44 @@ http.route({
 });
 
 // Validate and fix workout plan to ensure it has proper numeric types
-function validateWorkoutPlan(plan: any) {
-  const validatedPlan = {
+function validateWorkoutPlan(plan: RawWorkoutPlan): WorkoutPlan {
+  return {
     schedule: plan.schedule,
-    exercises: plan.exercises.map((exercise: any) => ({
-      day: exercise.day,
-      routines: exercise.routines.map((routine: any) => ({
-        name: routine.name,
-        sets:
-          typeof routine.sets === 'number'
-            ? routine.sets
-            : parseInt(routine.sets) || 1,
-        reps:
-          typeof routine.reps === 'number'
-            ? routine.reps
-            : parseInt(routine.reps) || 10,
-      })),
-    })),
+    exercises: plan.exercises.map(
+      (exercise): WorkoutDay => ({
+        day: exercise.day,
+        routines: exercise.routines.map(
+          (routine): WorkoutRoutine => ({
+            name: routine.name,
+            sets:
+              typeof routine.sets === 'number'
+                ? routine.sets
+                : parseInt(routine.sets) || 1,
+            reps:
+              typeof routine.reps === 'number'
+                ? routine.reps
+                : parseInt(routine.reps) || 10,
+          })
+        ),
+      })
+    ),
   };
-  return validatedPlan;
 }
 
 // Validate diet plan to ensure it strictly follows schema
-function validateDietPlan(plan: any) {
-  // Only keep the fields we want
-  const validatedPlan = {
-    dailyCalories: plan.dailyCalories,
-    meals: plan.meals.map((meal: any) => ({
-      name: meal.name,
-      foods: meal.foods,
-    })),
+function validateDietPlan(plan: RawDietPlan): DietPlan {
+  return {
+    dailyCalories:
+      typeof plan.dailyCalories === 'number'
+        ? plan.dailyCalories
+        : parseInt(plan.dailyCalories) || 2000,
+    meals: plan.meals.map(
+      (meal): Meal => ({
+        name: meal.name,
+        foods: meal.foods,
+      })
+    ),
   };
-  return validatedPlan;
 }
 
 http.route({
