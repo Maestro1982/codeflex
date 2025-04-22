@@ -24,6 +24,30 @@ const GenerateProgramPage = () => {
 
   const messageContainerRef = useRef<HTMLDivElement>(null);
 
+  // Get rid of "Meeting has ended" error
+  useEffect(() => {
+    const originalError = console.error;
+    // Override console.error to ignore "Meeting has ended" errors
+    console.error = function (msg, ...args) {
+      if (
+        msg &&
+        (msg.includes('Meeting has ended') ||
+          (args[0] && args[0].toString().includes('Meeting has ended')))
+      ) {
+        console.log('Ignoring known error: Meeting has ended');
+        return; // Don't pass to original handler
+      }
+
+      // Pass all other errors to the original handler
+      return originalError.call(console, msg, ...args);
+    };
+
+    // Restore original handler on unmount
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
   // Auto-scroll messages
   useEffect(() => {
     if (messageContainerRef.current) {
